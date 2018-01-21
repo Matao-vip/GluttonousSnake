@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Snake</title>
+	<style>
+		.hint{
+			position: absolute;
+			font-size:30px;
+			font-weight:bold;
+			color:#ff00ff;
+			top: 255px;
+			left: 100px;
+		}
+		.hide{display: none;}
+	</style>
+</head>
+<script>
+	document.addEventListener('DOMContentLoaded',function(){
+		// 获取画布
+		var canvas=document.querySelector('#canvas');
+		var Canvas=canvas.getContext("2d");
+		
+		// 2:下  4：左  6：右  8：上
+		// x y d(方向)
+		var snake=[[4,0,6],[3,0,6],[2,0,6],[1,0,6],[0,0,6]]
+		var now=6;
+
+		// 画布画图函数
+		function draw(){
+			// 清空画布
+			Canvas.clearRect(0,0,400,400);
+			// 画格子
+			for(var i=0;i<20;i++){
+				for(var j=0;j<20;j++){
+					Canvas.strokeStyle='#666';
+					Canvas.strokeRect(i*20,j*20,20,20);
+				}
+			}
+
+			// 画蛇
+			for(var i=0;i<snake.length;i++){
+				Canvas.fillStyle='#58bc58';
+				Canvas.fillRect(snake[i][0]*20,snake[i][1]*20,20,20);
+			}
+
+			// 画苹果
+			Canvas.fillStyle="#f00";
+			Canvas.fillRect(apple[0]*20,apple[1]*20,20,20)
+			
+		}
+
+		var apple=[];
+		// 生成苹果的随机坐标
+		function Apple(){
+			while(true){
+				var appX=parseInt(Math.random()*20);
+				var appY=parseInt(Math.random()*20);
+				var res=snake.every(function(item){
+					return appX!==item[0] || appY!==item[1];
+				})
+				// console.log(res);
+				if(res){
+					apple[0]=appX;
+					apple[1]=appY;
+					break;
+				}
+			}
+		}
+
+		// 蛇运动函数
+		function run(){
+			for(var i=0;i<snake.length;i++){
+				switch(snake[i][2]){
+					case 2:snake[i][1]++;break;//向下运动
+					case 4:snake[i][0]--;break;//向左运动
+					case 6:snake[i][0]++;break;//向右运动
+					case 8:snake[i][1]--;break;//向上运动
+				}
+			}
+		} 
+
+		// 定义turn数组，用来记录蛇身转向的坐标和方向
+		var turn=[];
+		// 通过键盘控制蛇的运动情况
+		document.onkeydown=function(e){
+			var firstX=snake[0][0];
+			var firstY=snake[0][1];
+			switch(e.keyCode){
+				case 37:
+					if(now!==6){
+						turn.push([firstX,firstY,4]);
+						now=4;
+						break;
+					}break;
+				case 38:
+					if(now!==2){
+						turn.push([firstX,firstY,8]);
+						now=8;
+						break;
+					}break;
+				case 39:
+					if(now!==4){
+						turn.push([firstX,firstY,6]);
+						now=6;
+						break;
+					}break;
+				case 40:
+					if(now!==8){
+						turn.push([firstX,firstY,2]);
+						now=2;
+						break;
+					}break;
+				default:
+					break;
+			}
+		}
+
+		// 控制蛇身转向
+		function direction(){
+			for(var i=0;i<snake.length;i++){
+				for(var j=0;j<turn.length;j++){
+					if(snake[i][0]===turn[j][0] && snake[i][1]===turn[j][1]){
+						snake[i][2]=turn[j][2];
+						if(i===snake.length-1){
+							turn.shift();
+						}
+					}
+				}
+			}
+		}
+
+		var length=document.querySelector('#length');
+		var L=snake.length;
+		length.innerHTML=L;
+		// 吃苹果
+		function eat(){
+			// 判断是否吃到苹果
+			if(snake[0][0]===apple[0] && snake[0][1]===apple[1]){
+				var lastX=snake[snake.length-1][0];
+				var lastY=snake[snake.length-1][1];
+				var lastD=snake[snake.length-1][2];
+				switch(lastD){
+					case 2:snake.push([lastX,lastY-1,2]);break;
+					case 4:snake.push([lastX+1,lastY,4]);break;
+					case 6:snake.push([lastX-1,lastY,6]);break;
+					case 8:snake.push([lastX,lastY+1,8]);break;
+				}
+				L++;
+				length.innerHTML=L;
+				Apple();
+			}
+		}
+
+		var hint=document.querySelector('.hint');
+		hint.classList.add('hide');
+		// 游戏结束
+		var over;
+		function gameover(){
+			if(snake[0][0]<0 || snake[0][0]>19 || snake[0][1]<0 || snake[0][1]>19){
+				hint.classList.remove('hide');
+				clearInterval(over);
+			}
+			for(i=1;i<snake.length;i++){
+				if(snake[i][0]===snake[0][0] && snake[i][1]===snake[0][1]){
+					hint.classList.remove('hide');
+					clearInterval(over);
+					break;
+				}
+			}
+		}
+		
+		
+		Apple();
+		draw();
+
+		var btn=document.querySelector('#btn');
+		btn.onclick=function(){
+			over=setInterval(function(){
+				gameover();
+				eat();
+				direction();
+				run();
+				draw();
+
+			},150)
+		}
+	})
+</script>
+<body>
+	<h1>贪吃蛇</h1>
+	<canvas height="400" width="400" id="canvas" style="border:1px solid #000;"></canvas>
+	<p><button id="btn">开始游戏</button> <a href="Snake.html">重置游戏</a> 当前长度：<b id='length' style="color:#58bc58"></b></p>
+	<span class="hint">Game Over</span>
+</body>
+</html>
